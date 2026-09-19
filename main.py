@@ -30,6 +30,9 @@ bg_img = pyg.image.load("img/Background/background.png").convert_alpha()
 panel_img = pyg.image.load("img/Icons/panel.png").convert_alpha()
 sword_img = pyg.image.load("img/Icons/sword.png").convert_alpha()
 potion_img = pyg.image.load("img/Icons/potion.png").convert_alpha()
+victory_img = pyg.image.load("img/Icons/victory.png").convert_alpha()
+defeat_img = pyg.image.load("img/Icons/defeat.png").convert_alpha()
+restart_img = pyg.image.load("img/Icons/restart.png").convert_alpha()
 
 
 # helper for drawing background
@@ -173,8 +176,19 @@ class Fighter:
             else:
                 self.idle()
 
+    def reset(self):
+        self.alive = True
+        self.potions = self.start_potions
+        self.frame_index = 0
+        self.action = 0
+        self.hp = self.max_hp
+        self.update_time = pyg.time.get_ticks()
+        damage_group.empty()
+
 
 # health bar class
+
+
 class HealthBar:
     def __init__(self, x, y, hp, max_hp):
         self.x = x
@@ -226,7 +240,9 @@ bandit2_health_bar = HealthBar(
     550, HEIGHT - bot_panel + 40 + 60, bandit2.hp, bandit2.max_hp
 )
 
+# buttons
 potion_button = Button(window, 100, HEIGHT - bot_panel + 70, potion_img, 64, 64)
+restart_button = Button(window, 300, 140, restart_img, 120, 30)
 
 # game variables
 current_fighter = 1
@@ -244,6 +260,7 @@ def main():
 
     current_fighter = 1
     action_cooldown = 0
+    game_over = 0  # 0: playing, 1: player won, -1: player lost
     while run:
         clock.tick(fps)
 
@@ -283,69 +300,93 @@ def main():
             potions = True
 
         draw_text(str(fighter.potions), font, red, 150, HEIGHT - bot_panel + 70)
-
-        # player action
-        if fighter.alive is True:
-            if current_fighter == 1:
-                action_cooldown += 1
-                if action_cooldown >= action_wait_time:
-                    # attack
-                    if attack == True and target != None:
-                        fighter.attack(target)
-                        current_fighter += 1
-                        action_cooldown = 0
-                    # potion
-                    elif potions == True:
-                        if fighter.potions > 0:
-                            if fighter.max_hp - fighter.hp > potion_effect:
-                                healing = potion_effect
-                            else:
-                                healing = fighter.max_hp - fighter.hp
-                            fighter.hp += healing
-                            damage_text = DamageText(
-                                fighter.rect.centerx,
-                                fighter.rect.y,
-                                str(healing),
-                                green,
-                            )
-                            damage_group.add(damage_text)
-                            fighter.potions -= 1
-                            action_cooldown = 0
-
-        # enemy action
-        for count, bandit in enumerate(bandit_list):
-            if current_fighter == 2 + count:
-                if bandit.alive is True:
+        if game_over == 0:
+            # player action
+            if fighter.alive is True:
+                if current_fighter == 1:
                     action_cooldown += 1
                     if action_cooldown >= action_wait_time:
-                        # healing
-                        if (bandit.hp / bandit.max_hp) < 0.5 and bandit.potions > 0:
-                            if bandit.max_hp - bandit.hp > potion_effect:
-                                healing = potion_effect
-                            else:
-                                healing = bandit.max_hp - bandit.hp
-                            bandit.hp += healing
-                            damage_text = DamageText(
-                                bandit.rect.centerx,
-                                bandit.rect.y,
-                                str(healing),
-                                green,
-                            )
-                            damage_group.add(damage_text)
-                            bandit.potions -= 1
-                            action_cooldown = 0
-                            current_fighter += 1
-
                         # attack
-                        else:
-                            bandit.attack(fighter)
+                        if attack == True and target != None:
+                            fighter.attack(target)
                             current_fighter += 1
                             action_cooldown = 0
-                else:
-                    current_fighter += 1
-        # reset
-        if current_fighter > total_fighters:
-            current_fighter = 1
+                        # potion
+                        elif potions == True:
+                            if fighter.potions > 0:
+                                if fighter.max_hp - fighter.hp > potion_effect:
+                                    healing = potion_effect
+                                else:
+                                    healing = fighter.max_hp - fighter.hp
+                                fighter.hp += healing
+                                damage_text = DamageText(
+                                    fighter.rect.centerx,
+                                    fighter.rect.y,
+                                    str(healing),
+                                    green,
+                                )
+                                damage_group.add(damage_text)
+                                fighter.potions -= 1
+                                action_cooldown = 0
+                                current_fighter += 1
+            else:
+                game_over = -1
+
+            # enemy action
+            for count, bandit in enumerate(bandit_list):
+                if current_fighter == 2 + count:
+                    if bandit.alive is True:
+                        action_cooldown += 1
+                        if action_cooldown >= action_wait_time:
+                            # healing
+                            if (bandit.hp / bandit.max_hp) < 0.5 and bandit.potions > 0:
+                                if bandit.max_hp - bandit.hp > potion_effect:
+                                    healing = potion_effect
+                                else:
+                                    healing = bandit.max_hp - bandit.hp
+                                bandit.hp += healing
+                                damage_text = DamageText(
+                                    bandit.rect.centerx,
+                                    bandit.rect.y,
+                                    str(healing),
+                                    green,
+                                )
+                                damage_group.add(damage_text)
+                                bandit.potions -= 1
+                                action_cooldown = 0
+                                current_fighter += 1
+
+                            # attack
+                            else:
+                                bandit.attack(fighter)
+                                current_fighter += 1
+                                action_cooldown = 0
+                    else:
+                        current_fighter += 1
+            # reset
+            if current_fighter > total_fighters:
+                current_fighter = 1
+
+        alive_bandits = 0
+        for bandit in bandit_list:
+            if bandit.alive is True:
+                alive_bandits += 1
+        if alive_bandits == 0:
+            game_over = 1
+
+        # display victory or defeat text
+        if game_over != 0:
+            if game_over == 1:
+                window.blit(victory_img, (WIDTH // 2 - 150, HEIGHT // 2 - 300))
+            if game_over == -1:
+                window.blit(defeat_img, (WIDTH // 2 - 150, HEIGHT // 2 - 300))
+            if restart_button.draw():
+                fighter.reset()
+                for bandit in bandit_list:
+                    bandit.reset()
+                current_fighter = 1
+                action_cooldown = 0
+                game_over = 0
 
         for event in pyg.event.get():
             if event.type == pyg.QUIT:
