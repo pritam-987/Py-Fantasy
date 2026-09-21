@@ -1,8 +1,17 @@
 import random
+import sys
+from pathlib import Path
 
 import pygame as pyg
 
 from button import Button
+
+
+def resource_path(path):
+    if getattr(sys, "frozen", False):
+        return Path(sys._MEIPASS) / path
+    return Path(__file__).parent / path
+
 
 pyg.init()
 
@@ -26,13 +35,13 @@ green = (0, 255, 0)
 blue = (0, 0, 255)
 
 # assets
-bg_img = pyg.image.load("img/Background/background.png").convert_alpha()
-panel_img = pyg.image.load("img/Icons/panel.png").convert_alpha()
-sword_img = pyg.image.load("img/Icons/sword.png").convert_alpha()
-potion_img = pyg.image.load("img/Icons/potion.png").convert_alpha()
-victory_img = pyg.image.load("img/Icons/victory.png").convert_alpha()
-defeat_img = pyg.image.load("img/Icons/defeat.png").convert_alpha()
-restart_img = pyg.image.load("img/Icons/restart.png").convert_alpha()
+bg_img = pyg.image.load(resource_path("img/Background/background.png")).convert_alpha()
+panel_img = pyg.image.load(resource_path("img/Icons/panel.png")).convert_alpha()
+sword_img = pyg.image.load(resource_path("img/Icons/sword.png")).convert_alpha()
+potion_img = pyg.image.load(resource_path("img/Icons/potion.png")).convert_alpha()
+victory_img = pyg.image.load(resource_path("img/Icons/victory.png")).convert_alpha()
+defeat_img = pyg.image.load(resource_path("img/Icons/defeat.png")).convert_alpha()
+restart_img = pyg.image.load(resource_path("img/Icons/restart.png")).convert_alpha()
 
 
 # helper for drawing background
@@ -81,7 +90,7 @@ class Fighter:
         # Idle animation: 0
         temp_list = []
         for i in range(8):
-            img = pyg.image.load(f"img/{self.name}/Idle/{i}.png")
+            img = pyg.image.load(resource_path(f"img/{self.name}/Idle/{i}.png"))
             self.img = pyg.transform.scale(
                 img, (img.get_width() * 3, img.get_height() * 3)
             )
@@ -91,7 +100,7 @@ class Fighter:
         # Attack animation: 1
         temp_list = []
         for i in range(8):
-            img = pyg.image.load(f"img/{self.name}/Attack/{i}.png")
+            img = pyg.image.load(resource_path(f"img/{self.name}/Attack/{i}.png"))
             self.img = pyg.transform.scale(
                 img, (img.get_width() * 3, img.get_height() * 3)
             )
@@ -101,7 +110,7 @@ class Fighter:
         # Damage animation: 2
         temp_list = []
         for i in range(3):
-            img = pyg.image.load(f"img/{self.name}/Hurt/{i}.png")
+            img = pyg.image.load(resource_path(f"img/{self.name}/Hurt/{i}.png"))
             self.img = pyg.transform.scale(
                 img, (img.get_width() * 3, img.get_height() * 3)
             )
@@ -111,7 +120,7 @@ class Fighter:
         # Death animation: 3
         temp_list = []
         for i in range(10):
-            img = pyg.image.load(f"img/{self.name}/Death/{i}.png")
+            img = pyg.image.load(resource_path(f"img/{self.name}/Death/{i}.png"))
             self.img = pyg.transform.scale(
                 img, (img.get_width() * 3, img.get_height() * 3)
             )
